@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Admin Panel</title>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.19.0.min.js"></script>
+    <link rel="stylesheet" href="map.css" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+        body {
+    /* margin: 0;
+    padding: 0; */
+    text-align: center;
+    /* background-color: #F3DC5D; */
+    background-size: cover;
+    /* background-position: relative; */
+    overflow-x: hidden;
+    font-family: sans-serif;
+  }
+        #logo {
+          position: relative;
+          top: 10px;
+          /* right: 620px; */
+        }
+        #logo_top_bar {
+          background-color: #F3DC5D;
+          height: 140px;
+          width: 100%;
+          margin-top: -10px;
+          margin-left: 0;
+          padding: 20px;
+        }
+        hr {
+          position: relative;
+          bottom: 20px;
+        }
+        #top_bar {
+          position: relative;
+          left: 950px;
+          bottom: 66px;
+        }
+        nav {
+          width: 100%;
+          overflow: auto;
+        }
+        ul {
+          padding: 0;
+          margin: 0 0 0 150px;
+          list-style: none;
+        }
+        li {
+          float: left;
+        }
+        nav a {
+          width: 100px;
+          display: block;
+          padding: 20px 15px;
+          text-decoration: none;
+          font-family: "Oxygen", sans-serif;
+          color: #f2f2f2;
+          text-align: center;
+        }
+  
+        nav a:hover {
+          color: #f2f2f2;
+          transition: 0.5s;
+          text-decoration: underline;
+        }
+        #logo_img {
+          position: relative;
+          bottom: 8px;
+        }
+        </style>
+  </head>
+  <body>
+    <!-- <script src="main.js"></script>     -->
+    <div id="logo_top_bar">
+        <div id="logo">
+          <img src="logo2.jpg" alt="My image" id="logo_img" />
+        </div>
+        <!-- <div id="top_bar">
+          <nav>
+            <ul>
+              <li>
+                <a href=""><span style="color: #263145";>Home</span></a>
+              </li>
+              
+              <li>
+                <a href=""><span style="color: black;">Vehicles</span></a>
+              </li>
+              <li>
+                <a href=""><span style="color: black;">Dashboard</span></a>
+              </li>
+              <li>
+                <a href=""
+                  ><span style="color: black;">Logout</span></a
+                >
+              </li>
+            </ul>
+          </nav>
+        </div> -->
+      </div>
+
+
+    
+    <div class="bg-others">
+        <div class="cards">
+            <h4 style="color: black;">Vehicle 1</h4>
+            <h5 style="color: black;">Vehicle no: KA 44 NF 3828</h5>
+
+
+            <div class="status"style="color: black;" >
+                Status: <p id="change"></p>
+            </div>
+        </div>
+      <div class="container">
+        <center>
+          <hr
+            style="
+              height: 2px;
+              border: none;
+              color: #ffffff;
+              background-color: #ffffff;
+              width: 35%;
+              margin: 0 auto 0 auto;
+            "
+          />
+        </center>
+        <br/>
+        <center>
+          <button class="btn btn-success col-sm-3" id="action">
+            Start Tracking
+          </button>
+        </center>
+        <br />
+        <center><div id="map-canvas"></div></center>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      // document.getElementById("click").addEventListener("click", () => {
+      //   speak()
+      // })
+  
+      function speak(msg){
+        const synth = window.speechSynthesis;
+        const voices = synth.getVoices();
+      
+        const utterThis = new SpeechSynthesisUtterance(msg);
+        utterThis.voice = voices[2];
+        synth.speak(utterThis);
+      }
+  
+      
+    </script>
+
+    <script>
+      
+
+    var geoFencePoints = [
+      {
+        lat: 13.1316,
+        lng: 77.5907,
+        circularRightDist: 0
+      },
+      {
+        lat: 13.1299,
+        lng: 77.6019,
+        circularRightDist: 0
+      },
+      {
+        lat: 13.1206,
+        lng: 77.6091,
+        circularRightDist: 0
+      },
+      {
+        lat: 13.1142,
+        lng: 77.5961,
+        circularRightDist: 0
+      },
+      {
+        lat: 13.1308,
+        lng: 77.5820,
+        circularRightDist: 0
+      },
+    ]
+
+      
+    
+
+
+    function haversine_distance2(c1, c2) {
+      // fixed_lat = 13.130799;
+      // fixed_lng = 77.590085;
+
+      var R = 6371.0710; // Radius of the Earth in kms
+      var rlat1 = c1.lat * (Math.PI/180); // Convert degrees to radians
+      var rlat2 = c2.lat * (Math.PI/180); // Convert degrees to radians
+      var difflat = rlat2-rlat1; // Radian difference (latitudes)
+      var difflon = (c2.lng-c1.lng) * (Math.PI/180); // Radian difference (longitudes)
+
+      var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat/2)*Math.sin(difflat/2)+Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(difflon/2)*Math.sin(difflon/2)));
+      return d;
+    }
+
+    // console.log(haversine_distance(geoFencePoints[0], geoFencePoints[1]))
+
+    for(var i = 0; i<geoFencePoints.length; i++){
+      // console.log(i + "--->" + ((i+1) % geoFencePoints.length) + " = " + haversine_distance(geoFencePoints[i], geoFencePoints[(i+1) % geoFencePoints.length]))
+      geoFencePoints[i].circularRightDist = haversine_distance2(geoFencePoints[i], geoFencePoints[(i+1) % geoFencePoints.length])
+    }
+
+
+    // var newCoordinate = {
+    //  lat: 13.1347,
+    //  lng: 77.5889
+    // }
+
+
+    const radians_to_degrees = (radians) => {
+      var pi = Math.PI;
+      return radians * (180/pi);
+    }
+
+    const getAngle = (b, c, a) => {
+
+      var numerator = (b * b) + (c * c) - (a * a)
+      var denominator = 2 * b * c
+
+      return radians_to_degrees(Math.acos(numerator/denominator))
+    }
+
+    const isInside = (coordinate) => {
+      var firstDist = haversine_distance2(coordinate, geoFencePoints[0])
+      var dist1 = firstDist
+      var dist2 = 0
+
+
+      var angleSum = 0
+      for(var i = 0; i <= geoFencePoints.length - 1; i++){
+        dist2 = haversine_distance2(coordinate, geoFencePoints[(i + 1) % geoFencePoints.length])
+        angle = getAngle(dist1, dist2, geoFencePoints[i].circularRightDist)
+        
+        // console.log(i + " --> " + ((i + 1) % geoFencePoints.length) + " Angle: " + angle)
+        angleSum += angle
+
+        dist1 = dist2
+      }
+
+      // console.log(angleSum)
+      return angleSum > 355.0
+
+      // console.log((angleSum > 355.0) ? "Inside": "Outside") 
+    }
+
+    </script>
+
+    <script>
+      // test
+      function haversine_distance(newCoordinate) {
+        fixed_lat = 13.130799;
+        fixed_lng = 77.590085;
+
+        var R = 6371.0710; // Radius of the Earth in miles
+        var rlat1 = fixed_lat * (Math.PI/180); // Convert degrees to radians
+        var rlat2 = newCoordinate.lat * (Math.PI/180); // Convert degrees to radians
+        var difflat = rlat2-rlat1; // Radian difference (latitudes)
+        var difflon = (newCoordinate.lng-fixed_lng) * (Math.PI/180); // Radian difference (longitudes)
+
+        var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat/2)*Math.sin(difflat/2)+Math.cos(rlat1)*Math.cos(rlat2)*
+        Math.sin(difflon/2)*Math.sin(difflon/2)));
+        return d;
+      }
+
+      //test
+
+      window.lat = 13.130799;
+      window.lng = 77.590085;
+
+      var map;
+      var mark;
+      var lineCoords = [];
+
+      var initialize = function () {
+        map = new google.maps.Map(document.getElementById("map-canvas"), {
+          center: { lat: lat, lng: lng },
+          zoom: 12,
+        });
+        mark = new google.maps.Marker({
+          position: { lat: lat, lng: lng },
+          map: map,
+        });
+
+        const bermudaTriangle = new google.maps.Polygon({
+          paths: geoFencePoints,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#FF0000",
+          fillOpacity: 0.35,
+        });
+
+        bermudaTriangle.setMap(map);
+      };
+
+      window.initialize = initialize;
+
+      var redraw = function (payload) {
+        console.log(payload.message)
+        console.log("Working")
+        if (payload.message.lat) {
+          lat = payload.message.lat;
+          lng = payload.message.lng;
+
+          
+          let inside = isInside({lat: lat, lng: lng})
+          console.log("Inside :" + inside)
+          // var statusElement = document.getElementById("status")
+          // document.getElementById('change').innerText = "Test"
+          if(!inside){
+            console.log("Vehicle moved outside the zone")
+            document.getElementById('change').innerText = "Outside"
+            document.getElementById('change').style.color = "red"
+            speak("Vehicle K A 44 NF 3 8 2 8 moved outside the zone")
+            //statusElement.innerHTML("Outside") 
+            // statusElement.style.color='red'   
+            }
+          else {
+              console.log("Vehicle inside the zone") 
+              document.getElementById('change').innerText = "Inside"
+              document.getElementById('change').style.color = "green"
+              // speak("Vehicle K A 44 NF 3 8 2 8 inside the zone")
+              //statusElement.textContent("Inside")
+              //statusElement.style.color='green'
+          }
+          // Boolean inside = isInside({lat: lat, lng: lng})
+          // console.log(isInside({lat: lat, lng: lng}) ? "Inside" : "Outside")
+
+          map.setCenter({ lat: lat, lng: lng, alt: 0 });
+          mark.setPosition({ lat: lat, lng: lng, alt: 0 });
+
+          lineCoords.push(new google.maps.LatLng(lat, lng));
+
+          var lineCoordinatesPath = new google.maps.Polyline({
+            path: lineCoords,
+            geodesic: true,
+            strokeColor: "#2E10FF",
+          });
+
+          lineCoordinatesPath.setMap(map);
+        }
+      };
+
+      var pnChannel = "raspi-tracker-one";
+
+      var pubnub = new PubNub({
+        publishKey: "pub-c-a22347d5-e42e-4363-9d1f-c1c37ae010aa",
+        subscribeKey: "sub-c-289aa927-9f4d-4061-9ab8-7b8e8b24cdb6",
+      });
+
+      document.querySelector("#action").addEventListener("click", function () {
+        speak("Nrupatunga")
+        var text = document.getElementById("action").textContent;
+        if (text == "Start Tracking") {
+          pubnub.subscribe({ channels: [pnChannel] });
+          pubnub.addListener({ message: redraw });
+          document.getElementById("action").classList.add("btn-danger");
+          document.getElementById("action").classList.remove("btn-success");
+          document.getElementById("action").textContent = "Stop Tracking";
+        } else {
+          pubnub.unsubscribe({ channels: [pnChannel] });
+          document.getElementById("action").classList.remove("btn-danger");
+          document.getElementById("action").classList.add("btn-success");
+          document.getElementById("action").textContent = "Start Tracking";
+        }
+      });
+      // function newPoint(time) {
+      //   var radius = 0.001;
+      //   var x = Math.random() * radius;
+      //   var y = Math.random() * radius;
+      //   return { lat: window.lat - y, lng: window.lng  + x};
+      // }
+      // setInterval(function () {
+      //   pubnub.publish({ channel: pnChannel, message: newPoint() });
+      // }, 500);
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBnMxYRA_0kfUkp6RbziL-kWXC8Zj2iJnk&callback=initialize"></script>
+  
+  </body>
+</html>
